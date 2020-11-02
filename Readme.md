@@ -130,11 +130,17 @@ service docker start
 
 ### 3. 部署mysql
 
+注意：此处务必到nacos的官方pom下看看人家支持的是哪个版本的mysql
+
+这里是8.0.15，版本选的太高nacos不支持会报神奇的错误
+
+比如8.0.16mysql报了神奇的错误，容器启动失败，无奈折腾了很久就是搞不定，使用了8.0.15完美解决
+
 ~~~shell
 #简简单单，先找mysql
 docker search mysql
 #选取第一个官方镜像
-docker pull mysql
+docker pull mysql:8.0.16
 #下载完后使用这个镜像新建一个mysql容器
 docker run --name mysql -p 3306:3306 -v /data/mysql/config:/etc/mysql/conf.d -v /data/mysql/log:/logs -v /data/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=williamworkstation -d mysql
 #注意，这里不知道为什么不能加--restart=always，加了以后容器闪退，只能执行完容器创建后重启容器，对想要加上开机自启动的容器使用如下代码配置自启动，目前还不知道为什么
@@ -162,18 +168,69 @@ docker update --restart=always [容器id]
 
 ### 5. 部署nacos注册中心
 
+[nacos-mysql初始化脚本地址]: https://github.com/alibaba/nacos/blob/master/config/src/main/resources/META-INF/nacos-db.sql
+
 ~~~shell
 #简简单单，先找nacos
 docker search nacos
 #选取第一个官方镜像
 docker pull nacos/nacos-server
 #下载完后使用这个镜像新建一个nacos容器
-docker run -d -p 8848:8848 -e MODE=standalone -v /opt/nacos/init.d/custom.properties:/home/nacos/init.d/custom.properties -v /opt/nacos/logs:/home/nacos/logs --restart always --name nacos nacos/nacos-server
+docker run -d -p 8848:8848 -e MODE=standalone -v /data/nacos/configs:/home/nacos/init.d -v /data/nacos/logs:/home/nacos/logs --name nacos nacos/nacos-server
 #注意，这里不知道为什么不能加--restart=always，加了以后容器闪退，只能执行完容器创建后重启容器，对想要加上开机自启动的容器使用如下代码配置自启动，目前还不知道为什么
 docker update --restart=always [容器id]
+#在mysql中执行nacos的脚本
+#脚本执行完毕后，进行nacos的配置,创建配置文件custom.properties
+#配置完后重启docker容器等一段时间，nacos启动有点慢，我的机器启动大概花了1分钟
+
 ~~~
 
+~~~shell
+server.contextPath=/nacos
+server.servlet.contextPath=/nacos
+server.port=8848
+
+spring.datasource.platform=mysql
+
+db.num=1
+db.url.0=jdbc:mysql://xx.xx.xx.x:3306/nacos_devtest_prod?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true
+db.user=user
+db.password=pass
+
+
+nacos.cmdb.dumpTaskInterval=3600
+nacos.cmdb.eventTaskInterval=10
+nacos.cmdb.labelTaskInterval=300
+nacos.cmdb.loadDataAtStart=false
+
+management.metrics.export.elastic.enabled=false
+
+management.metrics.export.influx.enabled=false
+
+
+server.tomcat.accesslog.enabled=true
+server.tomcat.accesslog.pattern=%h %l %u %t "%r" %s %b %D %{User-Agent}i
+
+
+nacos.security.ignore.urls=/,/**/*.css,/**/*.js,/**/*.html,/**/*.map,/**/*.svg,/**/*.png,/**/*.ico,/console-fe/public/**,/v1/auth/login,/v1/console/health/**,/v1/cs/**,/v1/ns/**,/v1/cmdb/**,/actuator/**,/v1/console/server/**
+nacos.naming.distro.taskDispatchThreadCount=1
+nacos.naming.distro.taskDispatchPeriod=200
+nacos.naming.distro.batchSyncKeyCount=1000
+nacos.naming.distro.initDataRatio=0.9
+nacos.naming.distro.syncRetryDelay=5000
+nacos.naming.data.warmup=true
+nacos.naming.expireInstance=true
+~~~
+
+
+
+
+
 ![image-20201101162202310](./资源/image-20201101162202310.png)
+
+
+
+
 
 
 
