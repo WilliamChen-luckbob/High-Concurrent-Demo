@@ -9,12 +9,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>order</artifactId>
+    <artifactId>msg-center</artifactId>
+
 
     <dependencies>
         <dependency>
-            <groupId>com.william-workstation</groupId>
-            <artifactId>config</artifactId>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+            <version>2.6.2</version>
         </dependency>
     </dependencies>
 </project>

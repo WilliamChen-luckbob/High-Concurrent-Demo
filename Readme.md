@@ -18,13 +18,23 @@
 
 使用kafka将请求的消息存入消息队列，进行缓冲，再由消费者依次调用相关的处理程序进行处理
 
-### 2. 应用间抢锁问题
+### 2. 分布式锁
 
-#### 秒杀扣库：
-
-
+秒杀扣库问题
 
 ### 3. 表单重复提交问题
+
+保证kafka幂等性
+
+### 4. 分布式事务
+
+一个服务失败所有服务回滚并给出相关提示
+
+### 5. 服务熔断与降级的操作
+
+并发数量过大，返回降级信息
+
+服务突然挂掉，熔断该服务
 
 
 
@@ -124,6 +134,8 @@ sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/ce
 sudo yum install -y docker-ce
 #等待，完事儿
 service docker start
+#（可选）设置docker开机自启动
+systemctl enable docker
 ~~~
 
 更多高端docker操作比如自己打包镜像，后续我会慢慢放上来
@@ -236,11 +248,88 @@ nacos.naming.expireInstance=true
 
 ### 6. 部署kafka
 
+~~~shell
+#docker拉取kafka和zookeeper的镜像
+docker pull wurstmeister/kafka
+docker pull wurstmeister/zookeeper
+#docker 打包yml参考官方文档
+https://github.com/wurstmeister/kafka-docker/blob/master/docker-compose.yml
+#这里我修改了kafka下的ports为9092:9092映射
+~~~
+
+~~~yml
+version: '3'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka
+    depends_on: [ zookeeper ]
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 10.168.1.245
+      KAFKA_CREATE_TOPICS: "test:1:1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /data/kafka/data/docker.sock:/var/run/docker.sock
+~~~
+
+**注意！！这里kafka配置文件中填写的ip地址应为宿主机ip地址！否则docker两个容器之间无法通过localhost进行通信！**
+
+这里提一句由于centos7的问题，docker-compose 命令不存在，需要安装一些扩展源
+
+~~~shell
+sudo yum install -y wget
+#讲文件下载至/usr/local/bin并重命名，再授权
+cd /usr/local/bin/
+#下载
+wget https://github.com/docker/compose/releases/download/1.14.0-rc2/docker-compose-Linux-x86_64
+#重命名
+rename docker-compose-Linux-x86_64 docker-compose docker-compose-Linux-x86_64
+#授予可执行权限
+chmod +x /usr/local/bin/docker-compose
+~~~
+
+
+
+~~~
+#在kafka-compose.yml目录中执行命令
+docker-compose build
+docker-compose up -d
+~~~
+
+手动安装
+
+~~~shell
+docker run --name zk -p 2181:2181  -d wurstmeister/zookeeper
+
+
+docker run --name kafka -p 9092:9092 -e KAFKA_BROKER_ID=0 -e KAFKA_ZOOKEEPER_CONNECT=10.168.1.245:2181 -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://10.168.1.245:9092 -e KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092 -v /data/kafka/data/docker.sock:/var/run/docker.sock -v /etc/localtime:/etc/localtime   wurstmeister/kafka
+
+
+
+~~~
+
+
+
 ### 7. 部署maven和jenkins
 
 
 
-## 三、参考
+## 三、分布式事务框架
+
+虽然手写底层也可以完成单点跨库的伪分布式事务操作，但这并没有什么卵用，实际集群中不可能一个transaction控制多个连接操作分布在不同主机上的mysql。
+
+参考文档：
+
+https://seata.io/zh-cn/docs/overview/what-is-seata.html
+
+经过学习，这里选用阿里开源的Seata框架， Seata 是一款开源的分布式事务解决方案，致力于提供高性能和简单易用的分布式事务服务。Seata 将为用户提供了 AT、TCC、SAGA 和 XA 事务模式，为用户打造一站式的分布式解决方案。 
+
+## 四、参考
 
 #### 1. 虚拟机桥接网卡的问题，找不到桥接网卡解决方案：
 
@@ -315,9 +404,9 @@ ip addr
 
 如果ping通，那么固定ip设定成功
 
+#### 3. 容器之间的通信问题
 
-
-
+在环境配置的时候，安装kafka的时候，mmp的事情发生了，kafka并没有如我们所愿的注册到zookeeper上，试想如果可以的话，平时如果不用docker其实是可以上去的。问题大抵是出在了容器和容器间互相通信的时候。百度找了一些方法无果。
 
 
 
