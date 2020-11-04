@@ -1,0 +1,22 @@
+server:
+  port: 9000
+
+#jayud:
+#  nacos:
+#    server-addr: 10.168.1.245:8848
+#    config:
+#      namespace: c19b4244-6c37-4ca2-ba49-a27404ca3f74
+
+spring:
+#  redis:
+#    host: 10.168.1.245
+#    port: 3306
+#    password: 'q$o8S#ixaf9x87nOF8oSoyAAQZut@zxe'
+#    timeout: 2000s
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://10.168.1.245:3306/demo_order?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: williamworkstation
+    configuration:
+      maximum-pool-size: 2

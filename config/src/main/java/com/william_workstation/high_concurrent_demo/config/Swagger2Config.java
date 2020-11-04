@@ -30,7 +30,7 @@ public class Swagger2Config {
         return new Docket(DocumentationType.SWAGGER_2)
                 .apiInfo(apiInfo())
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("com.william_workshop"))
+                .apis(RequestHandlerSelectors.basePackage("com.william_workstation.high_concurrent_demo"))
                 //只显示加了注解的api
                 .apis(RequestHandlerSelectors.withMethodAnnotation(ApiOperation.class))
                 .paths(PathSelectors.any())
@@ -45,8 +45,8 @@ public class Swagger2Config {
      */
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-                .title("hutool-excel测试")
-                .description("hutool-excel测试")
+                .title("高并发+分布式测试")
+                .description("高并发+分布式测试")
                 .version("1.0")
                 .build();
     }
