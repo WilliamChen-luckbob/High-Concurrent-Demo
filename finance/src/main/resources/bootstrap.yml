@@ -1,6 +1,6 @@
 spring:
   application:
-    name: order
+    name: finance
   profiles:
     active: dev
   cloud:
@@ -10,7 +10,7 @@ spring:
         # 配置文件后缀名为yaml
         file-extension: yaml
         namespace: ${wstation.nacos.config.namespace}
-#        group: SEATA_GROUP
+      #        group: SEATA_GROUP
       discovery:
         server-addr: ${wstation.nacos.server-addr}
 #        namespace: ${wstation.nacos.config.namespace}

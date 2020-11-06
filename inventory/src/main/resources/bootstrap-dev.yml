@@ -13,8 +13,8 @@ spring:
     timeout: 2000s
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://10.168.1.245:3306/demo_order?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    #    url: jdbc:mysql://192.168.2.101:3306/demo_order?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://10.168.1.245:3306/demo_inventory?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    #    url: jdbc:mysql://192.168.2.101:3306/demo_inventory?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
     password: williamworkstation
     configuration:
@@ -24,10 +24,9 @@ spring:
     alibaba:
       seata:
         enabled: true
-#        application-id: seata-server
-        enable-auto-data-source-proxy: false    #开启数据库代理
-
-        tx-service-group: order-service-seata #这里填写上传config.txt时对应的vgroupMapping配置
+        application-id: seata-server
+        enable-auto-data-source-proxy: true    #开启数据库代理
+        tx-service-group: inventory-service-seata #这里填写上传config.txt时对应的vgroupMapping配置
 mybatis-plus:
   mapper-locations: classpath*:*/mapper/*.xml
   configuration:

@@ -16,5 +16,6 @@
             <groupId>com.william-workstation</groupId>
             <artifactId>config</artifactId>
         </dependency>
+
     </dependencies>
 </project>

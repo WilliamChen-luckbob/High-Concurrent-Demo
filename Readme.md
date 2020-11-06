@@ -154,7 +154,14 @@ docker search mysql
 #选取第一个官方镜像
 docker pull mysql:8.0.16
 #下载完后使用这个镜像新建一个mysql容器
-docker run --name mysql -p 3306:3306 -v /data/mysql/config:/etc/mysql/conf.d -v /data/mysql/log:/logs -v /data/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=williamworkstation -d mysql
+docker run \
+--name mysql \
+-p 3306:3306 \
+-v /data/mysql/config:/etc/mysql/conf.d \
+-v /data/mysql/log:/logs \
+-v /data/mysql/data:/var/lib/mysql \
+-e MYSQL_ROOT_PASSWORD=williamworkstation \
+-d mysql
 #注意，这里不知道为什么不能加--restart=always，加了以后容器闪退，只能执行完容器创建后重启容器，对想要加上开机自启动的容器使用如下代码配置自启动，目前还不知道为什么
 docker update --restart=always [容器id]
 #确认开放对应端口，使用navicat测试连接即可
@@ -169,7 +176,13 @@ docker search redis
 #选取第一个官方镜像
 docker pull redis
 #下载完后使用这个镜像新建一个redis容器
-docker run -p 6379:6379 --name redis -v /data/redis/configs:/etc/redis/redis.conf -v /data/redis/data:/data -d redis redis-server /etc/redis/redis.conf --requirepass "williamworkstation"
+docker run \
+-p 6379:6379 \
+--name redis \
+-v /data/redis/configs:/etc/redis/redis.conf \
+-v /data/redis/data:/data \
+-d redis redis-server /etc/redis/redis.conf \
+--requirepass "williamworkstation"
 #注意，这里不知道为什么不能加--restart=always，加了以后容器闪退，只能执行完容器创建后重启容器，对想要加上开机自启动的容器使用如下代码配置自启动，目前还不知道为什么
 docker update --restart=always [容器id]
 #确认开放对应端口，使用redis工具测试链接即可
@@ -188,7 +201,13 @@ docker search nacos
 #选取第一个官方镜像
 docker pull nacos/nacos-server
 #下载完后使用这个镜像新建一个nacos容器
-docker run -d -p 8848:8848 -e MODE=standalone -v /data/nacos/configs:/home/nacos/init.d -v /data/nacos/logs:/home/nacos/logs --name nacos nacos/nacos-server
+docker run \
+-p 8848:8848 \
+-e MODE=standalone \
+-v /data/nacos/configs:/home/nacos/init.d \
+-v /data/nacos/logs:/home/nacos/logs \
+--name nacos \
+-d nacos/nacos-server
 #注意，这里不知道为什么不能加--restart=always，加了以后容器闪退，只能执行完容器创建后重启容器，对想要加上开机自启动的容器使用如下代码配置自启动，目前还不知道为什么
 docker update --restart=always [容器id]
 #在mysql中执行nacos的脚本
@@ -196,6 +215,8 @@ docker update --restart=always [容器id]
 #配置完后重启docker容器等一段时间，nacos启动有点慢，我的机器启动大概花了1分钟
 
 ~~~
+
+custom.properties 配置文件
 
 ~~~shell
 server.contextPath=/nacos
@@ -205,6 +226,7 @@ server.port=8848
 spring.datasource.platform=mysql
 
 db.num=1
+#此为nacos使用的数据库，自行按需配置，其他可以不改
 db.url.0=jdbc:mysql://xx.xx.xx.x:3306/nacos_devtest_prod?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true
 db.user=user
 db.password=pass
@@ -307,7 +329,15 @@ docker-compose up -d
 docker run --name zk -p 2181:2181  -d wurstmeister/zookeeper
 
 
-docker run --name kafka -p 9092:9092 -e KAFKA_BROKER_ID=0 -e KAFKA_ZOOKEEPER_CONNECT=10.168.1.245:2181 -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://10.168.1.245:9092 -e KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092 -v /data/kafka/data/docker.sock:/var/run/docker.sock -v /etc/localtime:/etc/localtime   wurstmeister/kafka
+docker run --name kafka \
+-p 9092:9092 \
+-e KAFKA_BROKER_ID=0 \
+-e KAFKA_ZOOKEEPER_CONNECT=10.168.1.245:2181 \
+-e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://10.168.1.245:9092 \
+-e KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092 \
+-v /data/kafka/data/docker.sock:/var/run/docker.sock \
+-v /etc/localtime:/etc/localtime \
+wurstmeister/kafka
 
 
 
@@ -317,17 +347,866 @@ docker run --name kafka -p 9092:9092 -e KAFKA_BROKER_ID=0 -e KAFKA_ZOOKEEPER_CON
 
 ### 7. 部署maven和jenkins
 
+### 8. 部署高可用的seata-server
+
+踩了无数的坑，面向百度没一个好使的教程，这里萌新踩了两天的坑，终于整理出来了最新版的基于docker+springcloud+seata高可用的分布式事务教程。记录一下。
+
+参考文档：
+
+http://seata.io/zh-cn/docs/ops/deploy-ha.html
+
+为seata-server服务端新建seata库，并执行官网的建表sql脚本如下
+
+Mysql基础表官方地址：https://github.com/seata/seata/blob/develop/script/server/db/mysql.sql
+
+~~~sql
+-- -------------------------------- The script used when storeMode is 'db' --------------------------------
+-- the table to store GlobalSession data
+CREATE TABLE IF NOT EXISTS `global_table`
+(
+    `xid`                       VARCHAR(128) NOT NULL,
+    `transaction_id`            BIGINT,
+    `status`                    TINYINT      NOT NULL,
+    `application_id`            VARCHAR(32),
+    `transaction_service_group` VARCHAR(32),
+    `transaction_name`          VARCHAR(128),
+    `timeout`                   INT,
+    `begin_time`                BIGINT,
+    `application_data`          VARCHAR(2000),
+    `gmt_create`                DATETIME,
+    `gmt_modified`              DATETIME,
+    PRIMARY KEY (`xid`),
+    KEY `idx_gmt_modified_status` (`gmt_modified`, `status`),
+    KEY `idx_transaction_id` (`transaction_id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8;
+
+-- the table to store BranchSession data
+CREATE TABLE IF NOT EXISTS `branch_table`
+(
+    `branch_id`         BIGINT       NOT NULL,
+    `xid`               VARCHAR(128) NOT NULL,
+    `transaction_id`    BIGINT,
+    `resource_group_id` VARCHAR(32),
+    `resource_id`       VARCHAR(256),
+    `branch_type`       VARCHAR(8),
+    `status`            TINYINT,
+    `client_id`         VARCHAR(64),
+    `application_data`  VARCHAR(2000),
+    `gmt_create`        DATETIME(6),
+    `gmt_modified`      DATETIME(6),
+    PRIMARY KEY (`branch_id`),
+    KEY `idx_xid` (`xid`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8;
+
+-- the table to store lock data
+CREATE TABLE IF NOT EXISTS `lock_table`
+(
+    `row_key`        VARCHAR(128) NOT NULL,
+    `xid`            VARCHAR(96),
+    `transaction_id` BIGINT,
+    `branch_id`      BIGINT       NOT NULL,
+    `resource_id`    VARCHAR(256),
+    `table_name`     VARCHAR(32),
+    `pk`             VARCHAR(36),
+    `gmt_create`     DATETIME,
+    `gmt_modified`   DATETIME,
+    PRIMARY KEY (`row_key`),
+    KEY `idx_branch_id` (`branch_id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8;
+~~~
+
+业务涉及的每一个库都要再有一个undo_log回滚表，比如order,finance,inventory三个库，里面分别都要建undo_log表
+
+~~~sql
+CREATE TABLE `undo_log` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint(20) NOT NULL,
+  `xid` varchar(100) NOT NULL,
+  `context` varchar(128) NOT NULL,
+  `rollback_info` longblob NOT NULL,
+  `log_status` int(11) NOT NULL,
+  `log_created` datetime NOT NULL,
+  `log_modified` datetime NOT NULL,
+  `ext` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ux_undo_log` (`xid`,`branch_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+~~~
+
+准备好服务端的注册文件testregistry.conf，官方示例如下
+
+~~~shell
+#官方示例
+registry {
+  # file 、nacos 、eureka、redis、zk、consul、etcd3、sofa
+  type = "file"
+  loadBalance = "RandomLoadBalance"
+  loadBalanceVirtualNodes = 10
+
+  nacos {
+    application = "seata-server"
+    serverAddr = "127.0.0.1:8848"
+    group = "SEATA_GROUP"
+    namespace = ""
+    cluster = "default"
+    username = ""
+    password = ""
+  }
+  eureka {
+    serviceUrl = "http://localhost:8761/eureka"
+    application = "default"
+    weight = "1"
+  }
+  redis {
+    serverAddr = "localhost:6379"
+    db = 0
+    password = ""
+    cluster = "default"
+    timeout = 0
+  }
+  zk {
+    cluster = "default"
+    serverAddr = "127.0.0.1:2181"
+    sessionTimeout = 6000
+    connectTimeout = 2000
+    username = ""
+    password = ""
+  }
+  consul {
+    cluster = "default"
+    serverAddr = "127.0.0.1:8500"
+  }
+  etcd3 {
+    cluster = "default"
+    serverAddr = "http://localhost:2379"
+  }
+  sofa {
+    serverAddr = "127.0.0.1:9603"
+    application = "default"
+    region = "DEFAULT_ZONE"
+    datacenter = "DefaultDataCenter"
+    cluster = "default"
+    group = "SEATA_GROUP"
+    addressWaitTime = "3000"
+  }
+  file {
+    name = "file.conf"
+  }
+}
+
+config {
+  # file、nacos 、apollo、zk、consul、etcd3
+  type = "file"
+
+  nacos {
+    serverAddr = "127.0.0.1:8848"
+    namespace = ""
+    group = "SEATA_GROUP"
+    username = ""
+    password = ""
+  }
+  consul {
+    serverAddr = "127.0.0.1:8500"
+  }
+  apollo {
+    appId = "seata-server"
+    apolloMeta = "http://192.168.1.204:8801"
+    namespace = "application"
+    apolloAccesskeySecret = ""
+  }
+  zk {
+    serverAddr = "127.0.0.1:2181"
+    sessionTimeout = 6000
+    connectTimeout = 2000
+    username = ""
+    password = ""
+  }
+  etcd3 {
+    serverAddr = "http://localhost:2379"
+  }
+  file {
+    name = "file.conf"
+  }
+}
+~~~
+
+准备好file.conf文件，官方示例配置如下：
+
+~~~shell
+transport {
+  # tcp, unix-domain-socket
+  type = "TCP"
+  #NIO, NATIVE
+  server = "NIO"
+  #enable heartbeat
+  heartbeat = true
+  # the client batch send request enable
+  enableClientBatchSendRequest = false
+  #thread factory for netty
+  threadFactory {
+    bossThreadPrefix = "NettyBoss"
+    workerThreadPrefix = "NettyServerNIOWorker"
+    serverExecutorThreadPrefix = "NettyServerBizHandler"
+    shareBossWorker = false
+    clientSelectorThreadPrefix = "NettyClientSelector"
+    clientSelectorThreadSize = 1
+    clientWorkerThreadPrefix = "NettyClientWorkerThread"
+    # netty boss thread size
+    bossThreadSize = 1
+    #auto default pin or 8
+    workerThreadSize = "default"
+  }
+  shutdown {
+    # when destroy server, wait seconds
+    wait = 3
+  }
+  serialization = "seata"
+  compressor = "none"
+}
+
+## transaction log store, only used in server side
+store {
+  ## store mode: file、db
+  mode = "file"
+  ## file store property
+  file {
+    ## store location dir
+    dir = "sessionStore"
+    # branch session size , if exceeded first try compress lockkey, still exceeded throws exceptions
+    maxBranchSessionSize = 16384
+    # globe session size , if exceeded throws exceptions
+    maxGlobalSessionSize = 512
+    # file buffer size , if exceeded allocate new buffer
+    fileWriteBufferCacheSize = 16384
+    # when recover batch read size
+    sessionReloadReadSize = 100
+    # async, sync
+    flushDiskMode = async
+  }
+
+  ## database store property
+  db {
+    ## the implement of javax.sql.DataSource, such as DruidDataSource(druid)/BasicDataSource(dbcp) etc.
+    datasource = "druid"
+    ## mysql/oracle/postgresql/h2/oceanbase etc.
+    dbType = "mysql"
+    driverClassName = "com.mysql.jdbc.Driver"
+    url = "jdbc:mysql://127.0.0.1:3306/seata"
+    user = "mysql"
+    password = "mysql"
+    minConn = 5
+    maxConn = 30
+    globalTable = "global_table"
+    branchTable = "branch_table"
+    lockTable = "lock_table"
+    queryLimit = 100
+  }
+}
+## server configuration, only used in server side
+server {
+  recovery {
+    #schedule committing retry period in milliseconds
+    committingRetryPeriod = 1000
+    #schedule asyn committing retry period in milliseconds
+    asynCommittingRetryPeriod = 1000
+    #schedule rollbacking retry period in milliseconds
+    rollbackingRetryPeriod = 1000
+    #schedule timeout retry period in milliseconds
+    timeoutRetryPeriod = 1000
+  }
+  undo {
+    logSaveDays = 7
+    #schedule delete expired undo_log in milliseconds
+    logDeletePeriod = 86400000
+  }
+  #check auth
+  enableCheckAuth = true
+  #unit ms,s,m,h,d represents milliseconds, seconds, minutes, hours, days, default permanent
+  maxCommitRetryTimeout = "-1"
+  maxRollbackRetryTimeout = "-1"
+  rollbackRetryTimeoutUnlockEnable = false
+}
+
+## metrics configuration, only used in server side
+metrics {
+  enabled = false
+  registryType = "compact"
+  # multi exporters use comma divided
+  exporterList = "prometheus"
+  exporterPrometheusPort = 9898
+}
+~~~
+
+其中，file.conf的三种数据源官方推荐配置如下
+
+~~~shell
+## transaction log store, only used in seata-server
+store {
+  ## store mode: file、db、redis
+  mode = "file"
+
+  ## file store property
+  file {
+    ## store location dir
+    dir = "sessionStore"
+    # branch session size , if exceeded first try compress lockkey, still exceeded throws exceptions
+    maxBranchSessionSize = 16384
+    # globe session size , if exceeded throws exceptions
+    maxGlobalSessionSize = 512
+    # file buffer size , if exceeded allocate new buffer
+    fileWriteBufferCacheSize = 16384
+    # when recover batch read size
+    sessionReloadReadSize = 100
+    # async, sync
+    flushDiskMode = async
+  }
+
+  ## database store property
+  db {
+    ## the implement of javax.sql.DataSource, such as DruidDataSource(druid)/BasicDataSource(dbcp)/HikariDataSource(hikari) etc.
+    datasource = "druid"
+    ## mysql/oracle/postgresql/h2/oceanbase etc.
+    dbType = "mysql"
+    driverClassName = "com.mysql.jdbc.Driver"
+    url = "jdbc:mysql://127.0.0.1:3306/seata"
+    user = "mysql"
+    password = "mysql"
+    minConn = 5
+    maxConn = 100
+    globalTable = "global_table"
+    branchTable = "branch_table"
+    lockTable = "lock_table"
+    queryLimit = 100
+    maxWait = 5000
+  }
+
+  ## redis store property
+  redis {
+    host = "127.0.0.1"
+    port = "6379"
+    password = ""
+    database = "0"
+    minConn = 1
+    maxConn = 10
+    maxTotal = 100
+    queryLimit = 100
+  }
+}
+
+~~~
+
+
+
+我实际使用的配置
+
+~~~shell
+#testregistry.conf
+registry {
+  # file 、nacos 、eureka、redis、zk、consul、etcd3、sofa
+  type = "nacos"  #修改为nacos，seata将注册到我们的nacos上
+
+  #nacos注册中心配置
+  nacos {
+    application = "seata-server"
+    serverAddr = "nacos主机的ip:8848"
+    group = "可自定义的组名"
+    namespace = "命名空间uid"
+    cluster = "default"
+
+    #如果nacos开启了权限控制，请配置用户名密码（此处我登录nacos是默认的，用""）
+    username = ""
+    password = ""
+  }
+}
+
+config {
+  # file、nacos 、apollo、zk、consul、etcd3
+  type = "file"  #修改为nacos
+  #这里我没搞定怎么使用nacos作为配置中心，同样的配置，使用nacos配置seata-server启动失败，最后不得已使用file
+file {
+    name = "file:/root/seata-config/file.conf"
+  }
+}
+~~~
+
+我的file.conf文件
+
+~~~shell
+#file.conf
+db {
+    ## the implement of javax.sql.DataSource, such as DruidDataSource(druid)/BasicDataSource(dbcp)/HikariDataSource(hikari) etc.
+    datasource = "druid"
+    ## mysql/oracle/postgresql/h2/oceanbase etc.
+    dbType = "mysql"
+    driverClassName = "com.mysql.cj.jdbc.Driver"
+    url = "jdbc:mysql://mysql宿主机ip:3306/seata"
+    user = "root"
+    password = "williamworkstation"
+    minConn = 5
+    maxConn = 100
+    globalTable = "global_table"
+    branchTable = "branch_table"
+    lockTable = "lock_table"
+    queryLimit = 100
+    maxWait = 5000
+  }
+
+~~~
+
+准备好两个文件后，放入你自定义的文件夹下，我这里是/data/seata/config，然后拉取镜像，挂载好目录，启动镜像
+
+~~~shell
+#拉取最新的seata-server镜像文件
+docker pull seataio/seata-server
+#将自定义的seata注册文件丢入/data/seata/config
+
+#指定使用自定义的注册文件启动seata-server容器
+#！！！注意！！！使用docker部署seata-server如果不指定IP，后面seata-server容器的ip和宿主机一致否则后面nacos会访问172.x.x.x的docker内网ip，最后百思不得其解强行看源码debug才发现！！！
+docker run --name seata-server \
+-p 8091:8091 \
+-e SEATA_CONFIG_NAME=file:/root/seata-config/testregistry \
+-e SEATA_IP=宿主机ip \
+-v /data/seata/config:/root/seata-config \
+-d seataio/seata-server
+~~~
+
+回车完事儿，一看nacos有了，我们的，服务端启动大功告成，这里跟别家教程不一样，可以按照我的方法进行自定义的命名空间定义，而非全都丢进public，当然丢也没事儿，TC端本就可以是公用的。
+
+![image-20201106162715648](../资源/image-20201106162715648.png)
+
+接下来部署客户端了，这里要给nacos配置一个很丑的配置文件（貌似阿里开源这边还没有整理好，面向百度大家与我一样都是导入成功后在nacos出现巨量的配置文件）
+
+现在你需要准备一个config.txt文件，shell脚本玩的溜的话随意。
+
+config.txt文件中的配置项,官方参考 https://github.com/seata/seata/blob/develop/script/config-center/config.txt 如下，自行选配。
+
+~~~shell
+transport.type=TCP
+transport.server=NIO
+transport.heartbeat=true
+transport.enableClientBatchSendRequest=false
+transport.threadFactory.bossThreadPrefix=NettyBoss
+transport.threadFactory.workerThreadPrefix=NettyServerNIOWorker
+transport.threadFactory.serverExecutorThreadPrefix=NettyServerBizHandler
+transport.threadFactory.shareBossWorker=false
+transport.threadFactory.clientSelectorThreadPrefix=NettyClientSelector
+transport.threadFactory.clientSelectorThreadSize=1
+transport.threadFactory.clientWorkerThreadPrefix=NettyClientWorkerThread
+transport.threadFactory.bossThreadSize=1
+transport.threadFactory.workerThreadSize=default
+transport.shutdown.wait=3
+service.vgroupMapping.my_test_tx_group=default
+service.default.grouplist=127.0.0.1:8091
+service.enableDegrade=false
+service.disableGlobalTransaction=false
+client.rm.asyncCommitBufferLimit=10000
+client.rm.lock.retryInterval=10
+client.rm.lock.retryTimes=30
+client.rm.lock.retryPolicyBranchRollbackOnConflict=true
+client.rm.reportRetryCount=5
+client.rm.tableMetaCheckEnable=false
+client.rm.sqlParserType=druid
+client.rm.reportSuccessEnable=false
+client.rm.sagaBranchRegisterEnable=false
+client.tm.commitRetryCount=5
+client.tm.rollbackRetryCount=5
+client.tm.defaultGlobalTransactionTimeout=60000
+client.tm.degradeCheck=false
+client.tm.degradeCheckAllowTimes=10
+client.tm.degradeCheckPeriod=2000
+store.mode=file
+store.file.dir=file_store/data
+store.file.maxBranchSessionSize=16384
+store.file.maxGlobalSessionSize=512
+store.file.fileWriteBufferCacheSize=16384
+store.file.flushDiskMode=async
+store.file.sessionReloadReadSize=100
+store.db.datasource=druid
+store.db.dbType=mysql
+store.db.driverClassName=com.mysql.jdbc.Driver
+store.db.url=jdbc:mysql://127.0.0.1:3306/seata?useUnicode=true
+store.db.user=username
+store.db.password=password
+store.db.minConn=5
+store.db.maxConn=30
+store.db.globalTable=global_table
+store.db.branchTable=branch_table
+store.db.queryLimit=100
+store.db.lockTable=lock_table
+store.db.maxWait=5000
+store.redis.host=127.0.0.1
+store.redis.port=6379
+store.redis.maxConn=10
+store.redis.minConn=1
+store.redis.database=0
+store.redis.password=null
+store.redis.queryLimit=100
+server.recovery.committingRetryPeriod=1000
+server.recovery.asynCommittingRetryPeriod=1000
+server.recovery.rollbackingRetryPeriod=1000
+server.recovery.timeoutRetryPeriod=1000
+server.maxCommitRetryTimeout=-1
+server.maxRollbackRetryTimeout=-1
+server.rollbackRetryTimeoutUnlockEnable=false
+client.undo.dataValidation=true
+client.undo.logSerialization=jackson
+client.undo.onlyCareUpdateColumns=true
+server.undo.logSaveDays=7
+server.undo.logDeletePeriod=86400000
+client.undo.logTable=undo_log
+client.log.exceptionRate=100
+transport.serialization=seata
+transport.compressor=none
+metrics.enabled=false
+metrics.registryType=compact
+metrics.exporterList=prometheus
+metrics.exporterPrometheusPort=9898
+~~~
+
+我的配置如下，其中最上面三行为我需要用到分布式事务的三个服务，分别是finance，inventory，order
+
+~~~shell
+#取名格式
+service.vgroup_mapping.[随便取一个你想要的名字]=default
+~~~
+
+后面的default最好不改他，这个是后面区分集群用的，我还没研究到就不动他了
+
+~~~shell
+#等号后面均为属性值
+
+service.vgroup_mapping.finance-service-seata=default
+service.vgroup_mapping.inventory-service-seata=default
+service.vgroup_mapping.order-service-seata=default
+store.mode=db
+store.db.datasource=dbcp
+store.db.dbType=mysql
+store.db.driverClassName=com.mysql.cj.jdbc.Driver
+store.db.url=jdbc:mysql://192.168.2.101:3306/seata?useUnicode=true
+store.db.user=root
+store.db.password=williamworkstation
+store.db.minConn=5
+store.db.maxConn=30
+store.db.globalTable=global_table
+store.db.branchTable=branch_table
+store.db.queryLimit=100
+store.db.lockTable=lock_table
+store.db.maxWait=5000
+
+~~~
+
+现在，下载官方导入脚本
+
+https://github.com/seata/seata/blob/develop/script/config-center/nacos/nacos-config.sh
+
+~~~shell
+#!/usr/bin/env bash
+# Copyright 1999-2019 Seata.io Group.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at、
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+while getopts ":h:p:g:t:u:w:" opt
+do
+  case $opt in
+  h)
+    host=$OPTARG
+    ;;
+  p)
+    port=$OPTARG
+    ;;
+  g)
+    group=$OPTARG
+    ;;
+  t)
+    tenant=$OPTARG
+    ;;
+  u)
+    username=$OPTARG
+    ;;
+  w)
+    password=$OPTARG
+    ;;
+  ?)
+    echo " USAGE OPTION: $0 [-h host] [-p port] [-g group] [-t tenant] [-u username] [-w password] "
+    exit 1
+    ;;
+  esac
+done
+
+if [[ -z ${host} ]]; then
+    host=localhost
+fi
+if [[ -z ${port} ]]; then
+    port=8848
+fi
+if [[ -z ${group} ]]; then
+    group="SEATA_GROUP"
+fi
+if [[ -z ${tenant} ]]; then
+    tenant=""
+fi
+if [[ -z ${username} ]]; then
+    username=""
+fi
+if [[ -z ${password} ]]; then
+    password=""
+fi
+
+nacosAddr=$host:$port
+contentType="content-type:application/json;charset=UTF-8"
+
+echo "set nacosAddr=$nacosAddr"
+echo "set group=$group"
+
+failCount=0
+tempLog=$(mktemp -u)
+function addConfig() {
+  curl -X POST -H "${contentType}" "http://$nacosAddr/nacos/v1/cs/configs?dataId=$1&group=$group&content=$2&tenant=$tenant&username=$username&password=$password" >"${tempLog}" 2>/dev/null
+  if [[ -z $(cat "${tempLog}") ]]; then
+    echo " Please check the cluster status. "
+    exit 1
+  fi
+  if [[ $(cat "${tempLog}") =~ "true" ]]; then
+    echo "Set $1=$2 successfully "
+  else
+    echo "Set $1=$2 failure "
+    (( failCount++ ))
+  fi
+}
+
+count=0
+#这里我做了一些修改，读取当前目录
+#for line in $(cat $(dirname "$PWD")/config.txt | sed s/[[:space:]]//g); do
+for line in $PWD/config.txt | sed s/[[:space:]]//g); do
+  (( count++ ))
+	key=${line%%=*}
+    value=${line#*=}
+	addConfig "${key}" "${value}"
+done
+
+echo "========================================================================="
+echo " Complete initialization parameters,  total-count:$count ,  failure-count:$failCount "
+echo "========================================================================="
+
+if [[ ${failCount} -eq 0 ]]; then
+	echo " Init nacos config finished, please start seata-server. "
+else
+	echo " init nacos config fail. "
+fi
+~~~
+
+当然这里可以自定义的，我直接复制下来新建了一个.sh 脚本，名字随意，我这里在nacos部署的机器上写的脚本，对官方脚本做了一些修改，见上面的注释。
+
+因为官方脚本默认使用localhost，萌新顺道儿学学shell，所以进去改了人家的代码，总之没挂就好
+
+这样，config.txt放在和nacos_upload.sh同样的目录下，执行脚本就好了
+
+运行脚本，如果你要推送到远程的nacos，那么你需要可选参数，如下
+
+~~~shell
+
+sh ./nacos_upload.sh -t c30291f5-1b10-4eac-a03e-54120b5cbb4d 
+#这是我自己取名字粘贴脚本进去的自定义脚本
+#可选参数：
+-h 你要写入的nacos主机IP，默认localhost
+-p 你要写入的nacos主机端口，默认8848
+-group 你要写入的配置所属的组，默认SEATA_GROUP
+-t 分支uuid
+-username -password nacos的用户密码，好像似乎不填也可以
+~~~
+
+![image-20201106163453026](../资源/image-20201106163453026.png)
+
+大功告成，一大堆配置，官方好像还没有给出什么好的办法解决这个问题，文档反正是看不懂了，丑归丑，能用。这里我试了一下，推送好配置以后，seata-server还是没能使用这里的配置，而只能使用file配置启动，所以实在没办法了，**务必确保file.config文件中的数据库配置与这里的配置一致，否则玩完！**
+
+这里的配置主要是提供给客户端使用的，似乎跟TC服务端没什么大关联，反正我是用不了nacos配置的，求大佬指点。
+
+下面，开始配置我们的springcloud项目
+
+首先加入maven依赖
+
+~~~xml
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-alibaba-seata</artifactId>
+    <version>2.1.0.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>io.seata</groupId>
+    <artifactId>seata-all</artifactId>
+    <version>1.3.0</version>
+</dependency>
+~~~
+
+现在，你需要一个名为registry.conf的文件**直接**放置于resources目录下，并且填入如下信息
+
+~~~shell
+#让你的客户端知道去哪找服务
+registry {
+  type = "nacos"
+  nacos {
+      serverAddr = "10.168.1.246:8848"
+      namespace = "c30291f5-1b10-4eac-a03e-54120b5cbb4d"
+      cluster = "default"
+  }
+}
+#让你的客户端知道去哪找配置
+config {
+  type = "nacos"
+  nacos {
+      serverAddr = "10.168.1.246:8848"
+      namespace = "c30291f5-1b10-4eac-a03e-54120b5cbb4d"
+      cluster = "default"
+  }
+}
+
+~~~
+
+修改你的application.yml文件添加如下代码
+
+~~~yml
+spring:
+  cloud:
+    alibaba:
+      seata:
+        enabled: true
+        application-id: seata-server #nacos中seata服务端的注册名称
+        enable-auto-data-source-proxy: true    #开启数据库自动代理
+        tx-service-group: inventory-service-seata #这里填写上传config.txt时对应此工程的vgroupMapping配置
+        #也就是刚才的
+         #service.vgroup_mapping.finance-service-seata=default
+		#service.vgroup_mapping.inventory-service-seata=default
+		#service.vgroup_mapping.order-service-seata=default
+~~~
+
+关闭主启动项的数据源自动配置
+
+~~~java
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+~~~
+
+在你的公共配置包或者本项目的配置包中添加一个数据源代理类
+
+~~~java
+package com.william_workstation.high_concurrent_demo.config;
+
+import javax.sql.DataSource;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
+import io.seata.rm.datasource.DataSourceProxy;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
+
+@Configuration
+public class DataSourceConfig {
+
+    /**
+     * @param sqlSessionFactory SqlSessionFactory
+     * @return SqlSessionTemplate
+     */
+    @Bean
+    public SqlSessionTemplate sqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
+        return new SqlSessionTemplate(sqlSessionFactory);
+    }
+
+    /**
+     * 从配置文件获取属性构造datasource，注意前缀，这里用的是druid，根据自己情况配置,
+     * 原生datasource前缀取"spring.datasource"
+     *
+     * @return
+     */
+    @Bean
+    @ConfigurationProperties(prefix = "spring.datasource")
+    public DataSource druidDataSource() {
+        DruidDataSource druidDataSource = new DruidDataSource();
+        return druidDataSource;
+    }
+
+    /**
+     * 构造datasource代理对象，替换原来的datasource
+     * @param druidDataSource
+     * @return
+     */
+    @Primary
+    @Bean("dataSource")
+    public DataSourceProxy dataSourceProxy(DataSource druidDataSource) {
+        return new DataSourceProxy(druidDataSource);
+    }
+
+    @Bean(name = "sqlSessionFactory")
+    public SqlSessionFactory sqlSessionFactoryBean(DataSourceProxy dataSourceProxy) throws Exception {
+        MybatisSqlSessionFactoryBean bean = new MybatisSqlSessionFactoryBean();
+        bean.setDataSource(dataSourceProxy);
+        ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        // bean.setConfigLocation(resolver.getResource("classpath:mybatis-config.xml"));
+        bean.setMapperLocations(resolver.getResources("${mybatis-plus.mapper-locations}"));
+        //这里${mybatis-plus.mapper-locations}你写自己的mapper.xml文件的路径即可
+
+        SqlSessionFactory factory = null;
+        try {
+            factory = bean.getObject();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return factory;
+    }
+
+    //    /**
+    //     * MP 自带分页插件
+    //     * @return
+    //     */
+    //    @Bean
+    //    public PaginationInterceptor paginationInterceptor() {
+    //        PaginationInterceptor page = new PaginationInterceptor();
+    //        page.setDialectType("mysql");
+    //        return page;
+    //    }
+}
+~~~
+
+给你要用事务的地方加上注解,因为事务的传递性，方法内调用的其他各种奇奇怪怪的方法都不需要加事务注解了，自动代理会帮你直接管理事务。
+
+~~~
+@GlobalTransactional(rollbackFor = Exception.class)
+~~~
+
+启动项目测试即可
+
 
 
 ## 三、分布式事务框架
 
 虽然手写底层也可以完成单点跨库的伪分布式事务操作，但这并没有什么卵用，实际集群中不可能一个transaction控制多个连接操作分布在不同主机上的mysql。
 
-参考文档：
-
-https://seata.io/zh-cn/docs/overview/what-is-seata.html
-
 经过学习，这里选用阿里开源的Seata框架， Seata 是一款开源的分布式事务解决方案，致力于提供高性能和简单易用的分布式事务服务。Seata 将为用户提供了 AT、TCC、SAGA 和 XA 事务模式，为用户打造一站式的分布式解决方案。 
+
+### 1. seata的高可用部署
+
+这里我先用docker部署了一个seata-server，文档是真的不好懂，折腾了很久，最后还是自己搞定了，详见[部署seata-server](#)
+
+
 
 ## 四、参考
 
@@ -446,4 +1325,84 @@ ip addr
 ~~~
 
 建立相应的模块，此处不表
+
+
+
+
+
+
+
+
+
+## bug
+
+尝试将seata使用nacos配置并注册到nacos中
+
+seata config不能指定namespace，只能用默认的""
+
+~~~
+registry {
+  # file 、nacos 、eureka、redis、zk、consul、etcd3、sofa
+  type = "nacos"  #修改为nacos，seata将注册到我们的nacos上
+
+  #nacos注册中心配置
+  nacos {
+    application = "seata-server"
+    serverAddr = "10.168.1.246:8848"
+    #serverAddr= "192.168.2.100:8848"
+    #group = "SEATA_GROUP"
+    #namespace = ""
+    namespace = "c30291f5-1b10-4eac-a03e-54120b5cbb4d"
+    cluster = "default"
+
+    #如果nacos开启了权限控制，请配置用户名密码
+    username = ""
+    password = ""
+  }
+}
+
+config {
+  # file、nacos 、apollo、zk、consul、etcd3
+  type = "nacos"  #修改为nacos
+  nacos {
+      serverAddr = "10.168.1.246:8848"
+      namespace = "c30291f5-1b10-4eac-a03e-54120b5cbb4d"
+      #namespace = ""
+      group = "SEATA_GROUP"
+
+      username = ""
+      password = ""
+  }
+}
+~~~
+
+解决方案：server端 registry注册到nacos，config使用本地文件，并指向命名空间dev，
+
+client端只用写一个registry文件，可以访问对应nacos上的配置以及服务即可
+
+### nacos寻找服务时,服务ip是docker的内网IP
+
+服务启动时指定参数
+
+~~~
+spring:
+  cloud:
+    inetutils:
+      ignored-interfaces: docker0
+    nacos:
+      discovery: 
+        ip: ${服务所在宿主机的IP}
+        port: ${服务的port，便于nacos去找到该服务}
+~~~
+
+~~~
+docker run --name seata-server \
+-p 8091:8091 \
+-e SEATA_CONFIG_NAME=file:/root/seata-config/testregistry \
+-e SEATA_IP=10.168.1.245 \
+-v /data/seata/config:/root/seata-config \
+-d seataio/seata-server
+~~~
+
+
 

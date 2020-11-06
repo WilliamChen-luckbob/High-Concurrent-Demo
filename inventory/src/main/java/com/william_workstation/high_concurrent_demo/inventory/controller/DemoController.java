@@ -1,7 +1,7 @@
-package com.william_workstation.high_concurrent_demo.finance.controller;
+package com.william_workstation.high_concurrent_demo.inventory.controller;
 
-import com.william_workstation.high_concurrent_demo.finance.entity.Balance;
-import com.william_workstation.high_concurrent_demo.finance.service.IBalanceService;
+import com.william_workstation.high_concurrent_demo.inventory.entity.Inventory;
+import com.william_workstation.high_concurrent_demo.inventory.service.IInventoryService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,30 +10,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @RestController
-@Api(tags = "财务模拟")
-@RequestMapping("/finance")
+@Api(tags = "库存模拟")
+@RequestMapping("/inventory")
 public class DemoController {
     @Autowired
-    IBalanceService balanceService;
+    IInventoryService inventoryService;
 
     @PostMapping(value = "/testConn")
     @ApiOperation(value = "测试")
-
-    public boolean tryCreateBalance(@RequestParam(name = "failed", defaultValue = "false") boolean failed) {
-
-        if (failed){
+    public boolean tryCreateInventory(@RequestParam(name = "failed", defaultValue = "false") boolean failed) {
+        if (failed) {
             throw new RuntimeException("哎呀，出错啦");
         }
-        Balance balance = new Balance();
-        balance.setUserName("william");
-        balance.setBalance(new BigDecimal("10000"));
-
+        Inventory inventory = new Inventory();
+        inventory.setSku("test12345");
+        inventory.setQuantity(10);
+        inventory.setOccupiedQuantity(0);
         try {
-//            int i=1/0;
-            balanceService.save(balance);
+            inventoryService.save(inventory);
         } catch (Exception exception) {
             exception.printStackTrace();
             return false;
