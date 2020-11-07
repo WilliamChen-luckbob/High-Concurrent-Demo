@@ -772,6 +772,15 @@ docker run --name seata-server \
 -e SEATA_IP=宿主机ip \
 -v /data/seata/config:/root/seata-config \
 -d seataio/seata-server
+#实体机的docker安装
+docker run --name seata \
+-p 18091:18091 \
+--restart=always \
+--network=host \
+-e SEATA_CONFIG_NAME=file:/root/seata-config/customizedregistry \
+-e SEATA_PORT=18091 \
+-v /data/seata/config:/root/seata-config \
+-d seataio/seata-server
 ~~~
 
 回车完事儿，一看nacos有了，我们的，服务端启动大功告成，这里跟别家教程不一样，可以按照我的方法进行自定义的命名空间定义，而非全都丢进public，当然丢也没事儿，TC端本就可以是公用的。
