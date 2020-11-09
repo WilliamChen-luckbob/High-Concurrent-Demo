@@ -13,5 +13,5 @@ spring:
       #        group: SEATA_GROUP
       discovery:
         server-addr: ${wstation.nacos.server-addr}
-#        namespace: ${wstation.nacos.config.namespace}
+        namespace: ${wstation.nacos.config.namespace}
 #        group: SEATA_GROUP
