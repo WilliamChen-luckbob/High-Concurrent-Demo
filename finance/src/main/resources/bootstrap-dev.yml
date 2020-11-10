@@ -1,7 +1,6 @@
 wstation:
   nacos:
     server-addr: 10.168.1.246:8848
-    #    server-addr: 192.168.2.100:8848
     config:
       namespace: c30291f5-1b10-4eac-a03e-54120b5cbb4d
 
@@ -13,8 +12,7 @@ spring:
     timeout: 2000s
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-#    url: jdbc:mysql://10.168.1.245:3306/demo_finance?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-     url: jdbc:mysql://192.168.2.101:3306/demo_finance?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://10.168.1.245:3306/demo_finance?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
     password: williamworkstation
     configuration:

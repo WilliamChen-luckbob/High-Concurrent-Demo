@@ -895,7 +895,7 @@ store.mode=db
 store.db.datasource=dbcp
 store.db.dbType=mysql
 store.db.driverClassName=com.mysql.cj.jdbc.Driver
-store.db.url=jdbc:mysql://192.168.2.101:3306/seata?useUnicode=true
+store.db.url=jdbc:mysql://10.168.1.245:3306/seata?useUnicode=true
 store.db.user=root
 store.db.password=williamworkstation
 store.db.minConn=5
@@ -1273,7 +1273,7 @@ NAME=enp0s3
 UUID=b65134a3-13e1-4357-9d07-10bc3fdfe85f
 DEVICE=enp0s3
 ONBOOT=yes #此处设置为yes
-IPADDR=192.168.2.100 #此处增加IPADDR为你指定的ip，192.168.x.x网段应与你的主机一致
+IPADDR=10.168.1.245 #此处增加IPADDR为你指定的ip，192.168.x.x网段应与你的主机一致
 NETMASK=255.255.255.0 #此处增加NETMASK指定的掩码
 GATEWAY=192.168.2.1 #此处增加GATEWAY指定的网关
 DNS1=192.168.2.1 #此处增加DNS1，与ipconfig中的DNS配置相同（默认与网关一致）
@@ -1358,7 +1358,7 @@ registry {
   nacos {
     application = "seata-server"
     serverAddr = "10.168.1.246:8848"
-    #serverAddr= "192.168.2.100:8848"
+    #serverAddr= "10.168.1.246:8848"
     #group = "SEATA_GROUP"
     #namespace = ""
     namespace = "c30291f5-1b10-4eac-a03e-54120b5cbb4d"
