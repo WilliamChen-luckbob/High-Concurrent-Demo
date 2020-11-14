@@ -1,0 +1,75 @@
+wstation:
+  nacos:
+    server-addr: 192.168.2.100:8848
+    config:
+      namespace: c30291f5-1b10-4eac-a03e-54120b5cbb4d
+seata:
+  enabled: true
+  application-id: seata-server
+  tx-service-group: order-service-seata #这里填写上传config.txt时对应的vgroupMapping配置
+  enable-auto-data-source-proxy: false
+  config:
+    type: nacos
+    nacos:
+      #namespace: ffe05704-8927-44f6-859d-a00cf6eb1fcf
+      #serverAddr: ${jayud.nacos.server-addr}
+      serverAddr: 192.168.2.100:8848
+      namespace: c30291f5-1b10-4eac-a03e-54120b5cbb4d
+      group: SEATA_GROUP
+      username: "nacos"
+      password: "nacos"
+  registry:
+    type: nacos
+    nacos:
+      application: seata-server
+      #server-addr: ${jayud.nacos.server-addr}
+      #namespace: ${jayud.nacos.config.namespace}
+      server-addr: 192.168.2.100:8848
+      namespace: c30291f5-1b10-4eac-a03e-54120b5cbb4d
+      group: DEFAULT_GROUP
+      username: "nacos"
+      password: "nacos"
+spring:
+  redis:
+    host: 192.168.2.100
+    port: 3306
+    password: 'q$o8S#ixaf9x87nOF8oSoyAAQZut@zxe'
+    timeout: 2000s
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.2.101:3306/demo_order?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: williamworkstation
+    configuration:
+      maximum-pool-size: 2
+    type: com.mysql.cj.jdbc.MysqlDataSource
+  cloud:
+    alibaba:
+      seata:
+        enabled: true
+        enable-auto-data-source-proxy: false    #开启数据库代理
+
+        tx-service-group: order-service-seata #这里填写上传config.txt时对应的vgroupMapping配置
+mybatis-plus:
+  mapper-locations: classpath*:*/mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+feign:
+  httpclient:
+    connection-timeout: 5000
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+          enabled: true
+        isolation:
+          thread:
+            timeoutInMilliseconds: 30000
+ribbon:
+  ReadTimeout: 30000
+  ConnectTimeout: 30000
