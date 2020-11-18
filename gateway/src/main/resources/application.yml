@@ -1,0 +1,46 @@
+server:
+  port: 9100 #端口
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"   # 允许跨域请求的域名或服务器IP,多个用逗号分隔，*为允许所有
+            allowedMethods:       # 允许跨域的请求方法
+              - GET
+              - POST
+              - PUT
+              - DELETE
+      routes:
+        - id: route-wwstation-order #路由ID
+          uri: lb://order  # uri以 lb:// 开头，后面接的服务名称)
+          predicates:
+            - Path=/wwstationOrder/**
+          filters:
+            - StripPrefix=1
+            - IgnoreGlobalFilterFactor
+        - id: route-wwstation-finance
+          uri: lb://finance
+          predicates:
+            - Path=/wwstationFinance/**
+          filters:
+            - StripPrefix=1
+            - IgnoreGlobalFilterFactor
+        - id: route-wwstation-inventory
+          uri: lb://inventory
+          predicates:
+            - Path=/wwstationInventory/**
+          filters:
+            - StripPrefix=1
+            - IgnoreGlobalFilterFactor
+#logging:
+#  org:
+#    springframework:
+#      cloud:
+#        gateway:
+#          filter:
+#            ReactiveLoadBalancerClientFilter: trace

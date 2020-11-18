@@ -1,0 +1,6 @@
+wwstation:
+  nacos:
+    server-addr: 10.168.1.246:8848
+    config:
+      namespace: b2a965e7-3963-4743-9718-1e09015be5d2
+

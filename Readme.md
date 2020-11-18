@@ -1111,7 +1111,7 @@ spring:
 在你的公共配置包或者本项目的配置包中添加一个数据源代理类
 
 ~~~java
-package com.william_workstation.high_concurrent_demo.config;
+package com.wwstation.config;
 
 import javax.sql.DataSource;
 
