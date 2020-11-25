@@ -1,0 +1,5 @@
+wwstation:
+  nacos:
+    server-addr: 192.168.0.229:8848
+    config:
+      namespace: 83a6c7d4-04b4-4bd5-83aa-a0729d24668a

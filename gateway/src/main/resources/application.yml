@@ -22,21 +22,28 @@ spring:
             - Path=/wwstationOrder/**
           filters:
             - StripPrefix=1
-            - IgnoreGlobalFilterFactor
+#            - JwtFilter
         - id: route-wwstation-finance
           uri: lb://finance
           predicates:
             - Path=/wwstationFinance/**
           filters:
             - StripPrefix=1
-            - IgnoreGlobalFilterFactor
+#            - JwtFilter
         - id: route-wwstation-inventory
           uri: lb://inventory
           predicates:
             - Path=/wwstationInventory/**
           filters:
             - StripPrefix=1
-            - IgnoreGlobalFilterFactor
+#            - JwtFilter
+        - id: route-wwstation-authorization
+          uri: lb://authorization
+          predicates:
+            - Path=/wwstationAuthorization/**
+          filters:
+            - StripPrefix=1
+#            - JwtFilter
 #logging:
 #  org:
 #    springframework:

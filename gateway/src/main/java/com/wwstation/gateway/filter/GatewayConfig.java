@@ -15,7 +15,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
  * @Date 2020/9/8
  */
 @Configuration
-public class CorsConfig {
+public class GatewayConfig {
     @Bean
     public CorsResponseHeaderFilter corsResponseHeaderFilter() {
         return new CorsResponseHeaderFilter();
@@ -29,8 +29,7 @@ public class CorsConfig {
         CorsWebFilter corsWebFilter = new CorsWebFilter(source, new DefaultCorsProcessor() {
             @Override
             protected boolean handleInternal(ServerWebExchange exchange, CorsConfiguration config,
-                                             boolean preFlightRequest)
-            {
+                                             boolean preFlightRequest) {
                 // 预留扩展点
                 // if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
                 return super.handleInternal(exchange, config, preFlightRequest);

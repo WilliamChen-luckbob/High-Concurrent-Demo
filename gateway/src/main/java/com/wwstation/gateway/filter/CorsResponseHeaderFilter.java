@@ -1,5 +1,6 @@
 package com.wwstation.gateway.filter;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.filter.NettyWriteResponseFilter;
@@ -14,17 +15,20 @@ import java.util.ArrayList;
  * @Auther william
  * @Date 2020/9/8
  */
+@Slf4j
 public class CorsResponseHeaderFilter implements GlobalFilter, Ordered {
     @Override
     public int getOrder() {
         // 指定此过滤器位于NettyWriteResponseFilter之后
         // 即待处理完响应体后接着处理响应头
         return NettyWriteResponseFilter.WRITE_RESPONSE_FILTER_ORDER + 1;
+
     }
 
     @Override
     @SuppressWarnings("serial")
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        log.info("经过跨域过滤器");
         return chain.filter(exchange).then(Mono.defer(() -> {
             exchange.getResponse().getHeaders().entrySet().stream()
                     .filter(kv -> (kv.getValue() != null && kv.getValue().size() > 1))
@@ -32,7 +36,9 @@ public class CorsResponseHeaderFilter implements GlobalFilter, Ordered {
                             || kv.getKey().equals(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS)))
                     .forEach(kv ->
                     {
-                        kv.setValue(new ArrayList<String>() {{add(kv.getValue().get(0));}});
+                        kv.setValue(new ArrayList<String>() {{
+                            add(kv.getValue().get(0));
+                        }});
                     });
 
             return chain.filter(exchange);

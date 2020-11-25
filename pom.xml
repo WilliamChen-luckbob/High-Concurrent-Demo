@@ -17,6 +17,7 @@
         <module>gateway</module>
         <module>common</module>
         <module>authorization</module>
+        <module>learning-test</module>
 
     </modules>
 
