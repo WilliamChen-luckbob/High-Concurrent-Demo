@@ -2,7 +2,7 @@ spring:
   application:
     name: order
   profiles:
-    active: ware
+    active: head
   cloud:
     nacos:
       config:

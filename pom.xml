@@ -16,7 +16,8 @@
         <module>config</module>
         <module>gateway</module>
         <module>common</module>
-        <module>authorization</module>
+        <!--        <module>authorization</module>-->
+        <module>learning-test</module>
 
     </modules>
 
@@ -39,6 +40,24 @@
                 <groupId>com.william-workstation</groupId>
                 <artifactId>config</artifactId>
                 <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.william-workstation</groupId>
+                <artifactId>common</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <!--用于RSA加密的工具包版本控制-->
+            <dependency>
+                <groupId>org.glassfish.main.common</groupId>
+                <artifactId>common-util</artifactId>
+                <version>6.0.0-RC2</version>
+            </dependency>
+
+            <!--fastjson版本控制-->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>1.2.75</version>
             </dependency>
             <!--springcloud系列引用的统一版本控制-->
             <dependency>

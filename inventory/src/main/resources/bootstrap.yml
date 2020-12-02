@@ -2,7 +2,7 @@ spring:
   application:
     name: inventory
   profiles:
-    active: ware
+    active: head
   cloud:
     nacos:
       config:
