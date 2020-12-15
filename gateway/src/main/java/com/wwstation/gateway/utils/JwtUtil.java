@@ -45,7 +45,8 @@ public class JwtUtil {
      *      -当前字符串的类型，一般都是“JWT”
      *      -哪种算法加密，“HS256”或者其他的加密算法
      *      所以一般都是固定的，没有什么变化
-     *  2. payload
+     *  2. payloadhutool
+     *
      *      一般有四个最常见的标准字段（下面有）
      *      iat：签发时间，也就是这个jwt什么时候生成的
      *      jti：JWT的唯一标识
