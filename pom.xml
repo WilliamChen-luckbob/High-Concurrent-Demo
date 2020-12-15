@@ -16,8 +16,9 @@
         <module>config</module>
         <module>gateway</module>
         <module>common</module>
-        <module>authorization</module>
+
         <module>learning-test</module>
+        <module>security</module>
 
     </modules>
 
@@ -57,7 +58,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>4.1.2</version>
+            </dependency>
         </dependencies>
+
     </dependencyManagement>
 
 

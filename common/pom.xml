@@ -13,6 +13,11 @@
     <artifactId>common</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
         <!--excel工具类依赖-->
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -25,7 +30,6 @@
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
-            <version>5.4.6</version>
         </dependency>
         <!--hutool工具类依赖-->
     </dependencies>
