@@ -119,6 +119,13 @@ VirtualBox：https://www.virtualbox.org/wiki/Downloads
 ~~~shell
 #yum 环境安装
 yum -y install yum-utils
+
+#加一个镜像地址
+sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo 
+
+#直接安装
+sudo yum install -y docker-ce
+
 #添加镜像加速
 sudo mkdir -p /etc/docker
 sudo tee /etc/docker/daemon.json <<-'EOF'
@@ -128,10 +135,8 @@ sudo tee /etc/docker/daemon.json <<-'EOF'
 EOF
 sudo systemctl daemon-reload
 sudo systemctl restart docker
-#加一个镜像地址
-sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo 
-#直接安装
-sudo yum install -y docker-ce
+
+
 #等待，完事儿
 service docker start
 #（可选）设置docker开机自启动
@@ -155,6 +160,7 @@ docker search mysql
 docker pull mysql:8.0.16
 #下载完后使用这个镜像新建一个mysql容器
 docker run \
+--restart=always \
 --name mysql \
 -p 3306:3306 \
 -v /data/mysql/config:/etc/mysql/conf.d \
@@ -177,8 +183,9 @@ docker search redis
 docker pull redis
 #下载完后使用这个镜像新建一个redis容器
 docker run \
--p 6379:6379 \
+--restart=always \
 --name redis \
+-p 6379:6379 \
 -v /data/redis/configs:/etc/redis/redis.conf \
 -v /data/redis/data:/data \
 -d redis redis-server /etc/redis/redis.conf \
@@ -202,6 +209,7 @@ docker search nacos
 docker pull nacos/nacos-server
 #下载完后使用这个镜像新建一个nacos容器
 docker run \
+--restart=always \
 -p 8848:8848 \
 -e MODE=standalone \
 -v /data/nacos/configs:/home/nacos/init.d \
