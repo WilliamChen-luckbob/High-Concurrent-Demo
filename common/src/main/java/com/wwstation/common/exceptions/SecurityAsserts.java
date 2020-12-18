@@ -7,16 +7,16 @@ import com.wwstation.common.components.ResultEnum;
  * @description
  * @Date: 2020-12-15 22:49
  */
-public class AuthAsserts {
+public class SecurityAsserts {
     public static void fail(String message) {
-        throw new AuthException(message);
+        throw new SecurityException(message);
     }
 
     public static void fail(ResultEnum errorCode) {
-        throw new AuthException(errorCode);
+        throw new SecurityException(errorCode);
     }
 
     public static void fail(ResultEnum errorCode, String message) {
-        throw new AuthException(errorCode.getCode(), message);
+        throw new SecurityException(errorCode.getCode(), message);
     }
 }

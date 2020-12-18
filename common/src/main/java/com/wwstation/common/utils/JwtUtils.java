@@ -1,4 +1,4 @@
-package com.wwstation.gateway.utils;
+package com.wwstation.common.utils;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;

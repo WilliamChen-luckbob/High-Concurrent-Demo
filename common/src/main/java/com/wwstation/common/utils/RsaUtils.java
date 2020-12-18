@@ -1,8 +1,8 @@
-package com.wwstation.gateway.utils;
+package com.wwstation.common.utils;
 
-import com.wwstation.common.components.RedisExpireTime;
-import com.wwstation.common.exceptions.AuthAsserts;
-import com.wwstation.gateway.utils.redis.RedisUtils;
+import com.infiai.webgateway.exceptions.SecurityAsserts;
+import com.infiai.webgateway.utils.redis.RedisExpireTime;
+import com.infiai.webgateway.utils.redis.RedisUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -413,7 +413,7 @@ public class RsaUtils {
         //从redis获取rsaToken对应的私钥并解密
         Map<String, String> map = redisUtils.getMap("RsaTokenPair:" + rsaToken);
         if (CollectionUtils.isEmpty(map)) {
-            AuthAsserts.fail("临时加密token不存在或已过期，请重新请求加密token");
+            SecurityAsserts.fail("临时加密token不存在或已过期，请重新请求加密token");
         }
 
         String decryptedData = decryptDataOnJava(encryptedData, map.get("privateKey"));

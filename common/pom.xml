@@ -18,6 +18,11 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <!--excel工具类依赖-->
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -32,5 +37,18 @@
             <artifactId>hutool-all</artifactId>
         </dependency>
         <!--hutool工具类依赖-->
+
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
+
     </dependencies>
 </project>

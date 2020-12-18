@@ -43,4 +43,8 @@ public class CommonResult implements Serializable {
     public static CommonResult fail() {
         return fail(ResultEnum.UNKNOWN_ERROR);
     }
+
+    public static CommonResult fail(int value, String message, Object data) {
+        return new CommonResult(value, message, data);
+    }
 }

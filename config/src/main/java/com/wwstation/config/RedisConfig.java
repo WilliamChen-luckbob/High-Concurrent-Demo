@@ -15,12 +15,16 @@ import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+/**
+ * by william
+ */
 @SuppressWarnings("all")
 @Configuration
 @EnableCaching
-public class RedisConfig extends CachingConfigurerSupport{
-	 /**
+public class RedisConfig extends CachingConfigurerSupport {
+    /**
      * 选择redis作为默认缓存工具
+     *
      * @param redisTemplate
      * @return
      */
@@ -29,18 +33,19 @@ public class RedisConfig extends CachingConfigurerSupport{
 //        RedisCacheManager rcm = new RedisCacheManager(redisTemplate);
 //        return rcm;
 //    }
-     @Bean
-     public CacheManager cacheManager(RedisConnectionFactory factory) {
-         RedisCacheManager redisCacheManager =
-                 RedisCacheManager.builder(factory)
-                         .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig())
-                         .transactionAware()
-                         .build();
-         return  redisCacheManager;
-     }
+    @Bean
+    public CacheManager cacheManager(RedisConnectionFactory factory) {
+        RedisCacheManager redisCacheManager =
+                RedisCacheManager.builder(factory)
+                        .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig())
+                        .transactionAware()
+                        .build();
+        return redisCacheManager;
+    }
 
     /**
      * retemplate相关配置
+     *
      * @param factory
      * @return
      */

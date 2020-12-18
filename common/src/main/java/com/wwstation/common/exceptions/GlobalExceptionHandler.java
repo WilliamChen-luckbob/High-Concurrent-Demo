@@ -30,14 +30,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 全局处理：捕获主动抛出的鉴权异常
+     * 全局处理：捕获主动抛出的安全异常
      *
      * @param ex
      * @return
      */
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(GlobalException.class)
-    public CommonResult handleAuthException(AuthException ex) {
+    public CommonResult handleAuthException(SecurityException ex) {
         log.error("认证异常控制输出：{}", ex.getMessage());
         return CommonResult.fail(ex.getCode(), ex.getMessage());
     }
