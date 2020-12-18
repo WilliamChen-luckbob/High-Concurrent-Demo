@@ -15,7 +15,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
  * @Date 2020/9/8
  */
 @Configuration
-public class CorsConfig {
+public class GatewayConfig {
     @Bean
     public CorsResponseHeaderFilter corsResponseHeaderFilter() {
         return new CorsResponseHeaderFilter();

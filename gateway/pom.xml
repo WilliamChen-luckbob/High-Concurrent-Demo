@@ -16,6 +16,7 @@
         <!--本地包依赖-->
         <dependency>
             <groupId>com.william-workstation</groupId>
+
             <artifactId>config</artifactId>
         </dependency>
         <dependency>
