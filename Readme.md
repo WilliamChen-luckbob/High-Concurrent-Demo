@@ -1,3 +1,5 @@
+
+
 # 并发的解决方案
 
 ## 一、背景
@@ -354,6 +356,68 @@ wurstmeister/kafka
 
 
 ### 7. 部署maven和jenkins
+
+部署jenkins
+
+~~~bash
+#拉取镜像
+docker pull jenkins
+#启动容器
+docker run -d \
+-p 12345:8080 \
+-p 50000:50000 \
+-v /data/jenkins:/var/jenkins_home \
+--name jenkins \
+--restart always \
+--privileged=true  \
+-u root jenkins
+#--privileged : 使用该参数，container内的root拥有真正的root权限，否则，container（容器）内的root只是外部的一个普通用户权限，privileged启动的容器可以看到很多host上的设备，并且可以执行mount，甚至允许你在docker容器内启动docker容器。
+
+#-p 50000:50000 : 如果您在其他机器上设置了一个或多个基于JNLP的Jenkins代理程序，而这些代理程序又与 jenkinsci/blueocean 容器交互（充当“主”Jenkins服务器，或者简称为“Jenkins主”）， 则这是必需的。默认情况下，基于JNLP的Jenkins代理通过TCP端口50000与Jenkins主站进行通信。
+
+
+
+#在安装目录下修改jenkins的镜像地址
+vim hudson.model.UpdateCenter.xml
+#将默认路径修改为
+https://mirrors.huaweicloud.com/jenkins/updates/update-center.json
+#保存
+#重启jsnkins
+
+~~~
+
+~~~
+安装：
+到jenkins官网下载最新的jenkins.war
+重启：
+nohup java -jar /tmp/jenkins.war --httpPort=8088 >/data/log/jenkins.log &
+
+1，添加Jenkins主机免密登录
+1，登录到Jenkins用户
+root用户时，使用 sudo su -s /bin/bash jenkins
+
+2， Jenkins有自己的ssh，如果需要ssh登录，需要登录到jenkins
+1，登录jenkins
+[root@jenkins_it3 new1_cart_DAT]# sudo su -s /bin/bash jenkins
+2，找到jenkins的公钥id_rsa.pub，复制到目标机器
+1，bash-4.1$ cat ~/.ssh/id_rsa.pub
+2，登录目标机器，如root，vim ~/.ssh/authorized_keys，将jenkins的公钥添加进来
+3，重启目标机器ssh服务
+[root@node2 .ssh]# /etc/rc.d/init.d/sshd restart
+4，jenkins主机，使用jenkins用户远程登录一次目标主机
+bash-4.1$ ssh -l root 192.168.223.220
+目的是为了让目标主机添加到jenkins用户的known_host
+
+2，Jenkins工作目录
+1，脚本位置 /var/lib/jenkins/jobs
+2，代码包位置 /var/lib/jenkins/workspace
+~~~
+
+
+
+![image-20201216095555601](C:\Users\willi\AppData\Roaming\Typora\typora-user-images\image-20201216095555601.png)
+
+
 
 ### 8. 部署高可用的seata-server
 
@@ -1210,6 +1274,25 @@ public class DataSourceConfig {
 ~~~
 
 启动项目测试即可
+
+
+
+### 9. 部署xxl-job
+
+~~~shell
+数据库中配置好相应的sql脚本，建好库
+拉镜像，注意如果不加tag将拉不下来，建议加上最新镜像
+启动即可
+
+docker run \
+-e PARAMS="--spring.datasource.url=jdbc:mysql://localhost:3306/xxl_job?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai --spring.datasource.username=root --spring.datasource.password=Lk123456" \
+-p 18080:8080 \
+-v /data/xxl-job-admin:/data/applogs \
+--name xxl-job-admin  \
+-d xuxueli/xxl-job-admin:2.2.0
+~~~
+
+
 
 
 
